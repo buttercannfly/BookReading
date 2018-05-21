@@ -67,6 +67,7 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, FileShareActivity.class);
+                Log.i("info", "change");
                 startActivity(intent);
             }
         });
