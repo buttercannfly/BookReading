@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <declare-styleable name="Circle">
+        <attr name ="Color" format="color"/>
+        <attr name="String" format="string"/>
+    </declare-styleable>
+</resources>
