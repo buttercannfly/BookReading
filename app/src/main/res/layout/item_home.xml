@@ -1,0 +1,34 @@
+<?xml version="1.0" encoding="utf-8"?>
+<RelativeLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:orientation="vertical" android:layout_width="match_parent"
+    android:layout_height="wrap_content">
+    <TextView
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:id="@+id/novel_name"
+        android:textColor="@android:color/background_dark" />
+    <TextView
+        android:id="@+id/latest_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout="@+id/novel_name"
+        android:layout_toRightOf="@+id/novel_name"
+        android:textColor="?attr/actionModeSplitBackground"/>
+    <TextView
+        android:id="@+id/author_name"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:layout_below="@+id/novel_name"
+        android:textSize="12sp"
+        android:textColor="@android:color/holo_green_dark" />
+    <TextView
+        android:id="@+id/span_time"
+        android:layout_width="wrap_content"
+        android:layout_height="wrap_content"
+        android:padding="10dp"
+        android:textSize="8sp"
+        android:textColor="@android:color/holo_red_dark" />
+
+
+
+</RelativeLayout>
