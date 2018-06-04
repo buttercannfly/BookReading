@@ -38,6 +38,8 @@ public class Realm_book extends RealmObject {
       int moveheight;
       int last_height;
       int pro_height;
+      String link;
+      String filepath;
      //预期设置为下章缓存功能，初期不开通
      //private String nextChapter;
 
@@ -46,6 +48,8 @@ public class Realm_book extends RealmObject {
          this.newChapter = newChapter;
          this.nowChapter = nowChapter;
          this.allChapter = allChapter;
+         chapterList = new RealmList<Chapter_book>();
+         bookmarkerList = new RealmList<Marker_book>();
      }
 
      public Realm_book(){
@@ -103,7 +107,7 @@ public class Realm_book extends RealmObject {
      }*/
      public BookInfo creatBokkInfo(){
          //return new BookInfo(index, bookname, getNowChapterName(), getAllChapter());
-         return new BookInfo(index, bookname, "章节", 0);
+         return new BookInfo(index, bookname, getNewChapter(), chapterList.size());
      }
      public void setBookContent(List<String[]> bookContent){
          for(int i = 0; i < bookContent.size(); i++){
@@ -187,5 +191,17 @@ public class Realm_book extends RealmObject {
         pro_height = height;
     }
     public int getPro_height(){return pro_height;}
+    public String getIamge(){
+        return filepath;
+    }
+    public void setImage(String path){
+        this.filepath = path;
+    }
+    public String getLink(){
+        return link;
+    }
+    public void setLink(String link){
+        this.link = link;
+    }
 
 }

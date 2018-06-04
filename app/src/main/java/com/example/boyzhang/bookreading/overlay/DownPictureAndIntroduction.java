@@ -1,4 +1,4 @@
-package com.novelreader.novelreader;
+package com.example.boyzhang.bookreading.overlay;
 
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
@@ -11,6 +11,11 @@ import org.jsoup.select.Elements;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
 import java.lang.annotation.Documented;
@@ -25,16 +30,18 @@ import java.nio.ByteBuffer;
 
 public class DownPictureAndIntroduction {
     public Bitmap bitmap;
-    public byte[] bytes;
     public boolean state;
-    DownPictureAndIntroduction(){
+    String name;
+    public String filepath;
+    public DownPictureAndIntroduction(String name){
+        this.name = name;
     }
-    public void downPicture(){
+    public void downPicture(final String url){
         new Thread(){
             public void run(){
                 try{
                    // Log.e("进入","进入");
-                    Document document= Jsoup.connect("https://www.gxwztv.com/ba598.shtml").get();
+                    Document document= Jsoup.connect(url).get();
                     Elements elements=document.select("div.col-xs-2");
                     Element element=elements.get(0);
                     String imageUrl=element.select("img.img-thumbnail").attr("src");
@@ -52,7 +59,7 @@ public class DownPictureAndIntroduction {
 
                     bis.close();
                     is.close();
-                    bytes=BitMapToByte(bitmap);
+                    saveBitmapToSDCard(bitmap, name);
                     state = true;
                 }catch (Exception e){
                     e.printStackTrace();
@@ -60,11 +67,31 @@ public class DownPictureAndIntroduction {
             }
         }.start();
     }
-    private byte[] BitMapToByte(Bitmap bitmap){
-        int number=bitmap.getByteCount();
-        ByteBuffer buf = ByteBuffer.allocate(number);
-        bitmap.copyPixelsToBuffer(buf);
-        byte[] by = buf.array();
-        return by;
+    /**
+     * 保存bitmap到SD卡
+     * @param bitmap
+     * @param imagename
+     */
+    public  void saveBitmapToSDCard(Bitmap bitmap, String imagename) {
+        String path = "/sdcard/BookReading/Picture/"+imagename;
+        File file = new File(path);
+        if(file.exists()){
+            file.delete();
+        }
+        FileOutputStream out;
+        try{
+            out = new FileOutputStream(file);
+            if(bitmap.compress(Bitmap.CompressFormat.PNG, 90, out))
+            {
+                out.flush();
+                out.close();
+            }
+        } catch (FileNotFoundException e) {
+            e.printStackTrace();
+        }
+        catch (IOException e){
+            e.printStackTrace();
+        }
+        filepath = path;
     }
 }

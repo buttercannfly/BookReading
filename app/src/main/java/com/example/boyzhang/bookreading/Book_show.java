@@ -69,6 +69,7 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
     GestureDetector gestureDetector;
     LinearLayout layout_menu;
     LinearLayout layout_book;
+    List<Chapter_book> chapter_books = new ArrayList<>();
     boolean isVisible = false;
     final int min_distance =50;
     final int min_speed = 100;
@@ -93,9 +94,11 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
     boolean downstate = true;
     boolean atBootm = false;
     //link为中间滑动标志
+    boolean chapterState;
     boolean link;
     boolean shouldhavenext;
-    List<Chapter> chapterList;
+    List<Chapter> chapterList = new ArrayList<>();
+    List<Chapter_book> bookchapterList;
     List<Marker> markerList;
     private PopupWindow mPopWindow;
     private ImageButton returnButton;
@@ -110,11 +113,13 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
     private LinearLayout color_green;
     private LinearLayout color_gray;
     private LinearLayout color_yellow;
+    String name;
     TextView fontSize;
     View.OnClickListener popupwindowListener;
     private Handler handler;
     int hight = 0;
     int moveheight;
+    String url;
     RealmResults<Realm_book> realm_books;
     String content1 = "城市的道路交通是城市基础设施的重要组成部分，是城市的血管和生命线，随着近年来城市经济的快速发展，城市化步伐的加快，许多城市都在迅速地拉大城市的框架，进行了许多的基础设施建设和道路建设。这些密集的设施和道路，大大加剧了城市交通的复杂程度。虽然城市也有了越来越多的公共交通设施，但由于城市人口愈加密集，车辆愈加拥堵，人们的出行依然不太方便，特别是对于一些对城市设施部署不熟悉的人。而现在提供路线推荐的许多应用，如百度地图，高德地图等，虽然能为用户推荐线路，但这些推荐往往只是针对单一交通方案的推荐，比如单一的公交路线。但是有的时候，人们出行并不只是要选择一种单一的交通方式，而且由于城市交通方式的复杂性以及基础设施分布的复杂性，这种单一的交通方案推荐往往不能满足预期要求。因此实现一种能综合考虑多种交通方案，并能满足用户时间和金钱花费预期要求的出行路线推荐方法是非常有必要的。\n" +
             "在路线推荐方面，已经有了很多研究成果。一般情况下，路线规划算法大多是基于基本的图搜索算法 Dijkstra、Floyd 等[1]。而现实中路径选择经常使用的流行技术有动态规划，扩展的A*算法等。目前路线规划的研究主要分为两种：一种是纯路线规划算法的研究；另一种是基于对日常生活中人们的大量行为（如轨迹等）的分析，挖掘出里面的知识来进行路线的规划。2008年前后，以KIT为主的研究院产出了多个路线规划加速算法，其中影响较大的有contraction hierarchies[2]和highway hierarchies[3]，加之Microsoft提出的Customizable Route Planning[4]，与传统的A*算法，基本支撑起目前工业界地图产品的路线规划服务。\n" +
@@ -137,7 +142,7 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
         handler = new Handler();
         realm = Realm.getDefaultInstance();
         bookInfo = getIntent().getParcelableExtra("bookInfo");
-        String name = bookInfo.getBookName();
+        name = bookInfo.getBookName();
         index = bookInfo.getNowChapterIndex();
         chapterNow_name = bookInfo.getNewChapter();
         realm_books = realm.where(Realm_book.class)
@@ -216,10 +221,26 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
         realm = Realm.getInstance(config);
         RealmResults<Realm_book> userList = realm.where(Realm_book.class)
                 .equalTo("bookname", "第一本书").findAll();*/
+        final String s = loadFile();
         InitChapterList();
-        String s = loadFile();
-        chapterNow.setText(index + " " + chapterNow_name);
-        booktxt.setText( s);
+
+        //booktxt.setText(s);
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+
+                        //booktxt.setBackgroundColor(colorId);
+                        //booktxt.setTextSize(TypedValue.COMPLEX_UNIT_SP, fontsize);
+                        //while (book.chapterList == null || book.chapterList.size() < index);
+                        chapterNow.setText(book.chapterList.get(index - 1).getChapterName());
+
+                    }
+                });
+            }
+        }).start();
         /*Runnable runnable = new Runnable() {
             @Override
             public void run() {
@@ -231,47 +252,27 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
     }
 
     public void InitChapterList(){
-        String s = "章节";
-        String title = "标题";
-        chapterList = new ArrayList<>();
-        for(int i = 0; i < 100; i++){
-            chapterList.add(new Chapter(i, s + i + title));
-        }
+       if(book.chapterList != null && book.chapterList.size() > 0){
+           Log.e("chapter", "!null");
+           for(int i = 0; i < book.chapterList.size(); i++){
+               chapterList.add(new Chapter(i, book.chapterList.get(i).getChapterName() + " "));
+           }
+           chapterState = true;
+           return;
+       }
         new Thread(new Runnable() {
             @Override
             public void run() {
-                Realm realm = Realm.getDefaultInstance();
-                final ArrayList<String[]> arrayList = downLoad.AllDownLoad("http://www.wzzw.la/28/28945/");
-                while (arrayList.size() < 3){
+                downLoad.DealUrlSearch(url);
+                while (!downLoad.state){
                     SystemClock.sleep(100);
-                    Log.e("size", arrayList.size() + "");
                 }
-                System.out.println(arrayList.get(0)[0]);
-                realm.executeTransaction(new Realm.Transaction() {
-                    @Override
-                    public void execute(Realm realm) {
-                        //先查找后得到User对象
-                        RealmResults<Realm_book> realm_books = realm.where(Realm_book.class)
-                                .equalTo("bookname", bookInfo.getBookName()).findAll();
-                        if(realm_books.size() <= 0){
-                            return;
-                        }
-                        Realm_book realm_book = realm_books.get(0);
-                        realm_book.chapterList = new RealmList<Chapter_book>();
-                        for(int i = 0; i < 3; i++){
-                            realm_book.chapterList.add(new Chapter_book());
-                            String[] strings = arrayList.get(i);
-                            String s = new String(chapterList.get(i).getName());
-                            s = s + "\n" + "\n" + "\n";
-                            for(int j = 0; j < strings.length; j++){
-                                s = s + "  " + strings[j] + "\n";
-                            }
-                            s = s + "\n" + "\n" + "\n";
-                            realm_book.chapterList.get(i).setChapterContent(s);
-                        }
-                    }
-                });
-                realm.close();
+                List<String> list = downLoad.returnChapterList();
+                Log.e("down", "size" + list.size());
+                for(int i = 0; i <  list.size(); i++){
+                    chapterList.add(new Chapter(i, list.get(i)));
+                }
+                chapterState = true;
             }
         }).start();
     }
@@ -344,12 +345,18 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
         View parentView = LayoutInflater.from(Book_show.this).inflate(R.layout.activity_book_show, null);
         int width = parentView.getWidth();
         View contentView = LayoutInflater.from(Book_show.this).inflate(R.layout.popupwindow_chapter, null);
+        TextView bookname = contentView.findViewById(R.id.bookname);
+        bookname.setText(book.getBookName());
+        final TextView chapter = contentView.findViewById(R.id.chapter_size);
+        chapter.setText("共" + book.getAllChapter() + "章");
         mPopWindow = new PopupWindow(contentView, WindowManager.LayoutParams.WRAP_CONTENT, WindowManager.LayoutParams.MATCH_PARENT, true);
         mPopWindow.setContentView(contentView);
         //点击外面消失
         //mPopWindow.setOutsideTouchable(true);
         //mPopWindow.setBackgroundDrawable(new BitmapDrawable());
-        InitChapterList();
+        while (!chapterState){
+
+        }
         InitMarkerList();
         ChapterListAdapter adapter = new ChapterListAdapter(chapterList, contentView.getContext());
         MarkerListAdapter markerListAdapter = new MarkerListAdapter(markerList, contentView.getContext());
@@ -384,16 +391,42 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
             @Override
             public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
                 //更新当前章节
+                Log.e("log", "click");
                 index = position + 1;
-                //更新当前章节内容
-                String s = book.chapterList.get(position).getChapterContent();
-                if(s.length() == 0){
-                   s = content1;
-                }
-                booktxt.setText(s);
                 //更新last_height, pro_height
                 pro_height = 0;
                 last_height = 0;
+                chapterNow.setText(book.chapterList.get(position).getChapterName());
+                //更新当前章节内容
+                if(book.chapterList != null && book.chapterList.size() > index && book.chapterList.get(position).getChapterContent() != null){
+                    Log.i("indo", book.chapterList.get(position).getChapterContent());
+                    booktxt.setText(book.chapterList.get(position).getChapterContent());
+                    return;
+                }
+                else{
+                    //及时下载
+                    final int index = position;
+                    Log.e("showUrl", book.chapterList.get(position).geturl());
+                    new Thread(new Runnable() {
+                        @Override
+                        public void run() {
+                            //内容
+                            final String s = downChapter(index);
+                            Chapter_book chapter_book = new Chapter_book();
+                            chapter_book.setChapterIndex(index);
+                            chapter_book.setChapterContent(s);
+                            chapter_books.add(chapter_book);
+                            handler.post(new Runnable() {
+                                @Override
+                                public void run() {
+                                    booktxt.setText(s);
+                                }
+                            });
+                        }
+                    }).start();
+                }
+                mPopWindow.dismiss();
+
             }
         });
         markerView.setAdapter(markerListAdapter);
@@ -580,16 +613,16 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
             if(isBootm()){
                 link = true;
                 //下章内容
-                String s = getNextChapter(index);
+                //String s = getNextChapter(index);
                 if(last_height != 0){
                     int allheight = booktxt.getMeasuredHeight();
                     Log.e("tag", "allheight" + allheight);
                     final int moveheight = allheight - last_height;
                     last_height = moveheight;
                     //content1为当前章节尾
-                    booktxt.setText(content1);
+                    booktxt.setText(getChapter(index));
                     //content1为下章内容
-                    booktxt.append(s);
+                    booktxt.append(getChapter(index + 1));
                     Runnable runnable = new Runnable() {
                         @Override
                         public void run() {
@@ -608,7 +641,7 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
                     if(pro_height == 0)
                         last_height = booktxt.getMeasuredHeight();
                     else last_height = booktxt.getMeasuredHeight() - pro_height;
-                    booktxt.append(content1);
+                    booktxt.append(getChapter(index + 1));
                     upstate = true;
                 }
             }
@@ -647,9 +680,9 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
                     int allheight = booktxt.getMeasuredHeight();
                     //CharSequence s = booktxt.getText();
                     //content1为上章内容
-                    booktxt.setText(s);
+                    booktxt.setText(getChapter(index - 1));
                     //content1为当前内容
-                    booktxt.append(content1);
+                    booktxt.append(getChapter(index));
                     //设置了新内容但是不会立即绘制出来，此时下面的hight认为原高度
                     final int moveheight = allheight - pro_height;
                     pro_height = moveheight;
@@ -672,9 +705,9 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
                     }
                     else pro_height = booktxt.getMeasuredHeight() - last_height;
                     //上涨内容
-                    booktxt.setText(content1);
+                    booktxt.setText(getChapter(index - 1));
                     //content1为当前内容
-                    booktxt.append(content1);
+                    booktxt.append(getChapter(index));
                     Runnable runnable = new Runnable() {
                         @Override
                         public void run() {
@@ -788,6 +821,8 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
         colorId = book.getColorId();
         shouldhavenext = book.getShould_haveNext();
         moveheight = book.getMoveHeight();
+        url = book.getLink();
+        bookchapterList = book.chapterList;
         /*new Thread(new Runnable() {
             @Override
             public void run() {
@@ -796,9 +831,39 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
         }).start();*/
         //设置两章内容
         String s = new String();
-        if(book.chapterList.size() != 0)
+        if(book.chapterList != null && book.chapterList.size() > 0 && book.chapterList.get(0).getChapterContent() != null)
             s = s + book.chapterList.get(0).getChapterContent();
-        else return content1;
+        else if(book.chapterList != null && book.chapterList.size() > 0 && book.chapterList.get(0).geturl() != null){
+            final String link = new String(book.chapterList.get(0).geturl());
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    DownLoad downLoad = new DownLoad();
+                    downLoad.PartDownLoad(link, 0, url);
+                    while (!downLoad.state2){
+                        SystemClock.sleep(100);
+                    }
+                    String[] strings =downLoad.chapterContent;
+                            String s = new String();
+                    for(int i = 0; i < strings.length; i++){
+                        s = s + "    " + strings[i] + "\n";
+                    }
+                    s= s + "\n" + "\n" +"\n";
+                    final String text = s;
+                    Log.e("length", "len: " + s + "\n" + text);
+                    Chapter_book chapter_book = new Chapter_book(0, "name");
+                    chapter_book.setChapterContent(s);
+                    chapter_books.add(chapter_book);
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            Log.e("handle", "state" + text);
+                            //booktxt.setText(text);
+                        }
+                    });
+                }
+            }).start();
+        }
         //需要先判断有没有该章节, 从0开始，所以index没加1
         if(shouldhavenext ){
             last_height = book.getLast_height();
@@ -826,10 +891,11 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
                     realm_book.setShould_havenext(shouldhavenext);
                     realm_book.setLast_height(last_height);
                     realm_book.setPro_height(pro_height);
-                    if(updateChapterList()){
-                        chapterList = getChapterList();
-                        for(int i = book.chapterList.size(); i < chapterList.size(); i++){
-                            book.chapterList.add(new Chapter_book(i + 1, chapterList.get(i).getName()));
+                    if(chapter_books.size() != 0){
+                        for(int i = 0; i < chapter_books.size(); i++){
+                            int index = chapter_books.get(i).getChapterIndex();
+                            String s = chapter_books.get(i).getChapterContent();
+                            realm_book.chapterList.get(index).setChapterContent(s);
                         }
                     }
 
@@ -909,15 +975,14 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
 
     }
     public String getNextChapter(int i){
-        String s = content1;
-        if(book.chapterList.get(i).getChapterContent().length() != 0)
+        String s = new String();
+        if(book.chapterList != null && book.chapterList.size() > i && book.chapterList.get(i).getChapterContent() != null)
             return book.chapterList.get(i).getChapterContent();
         else{
             //download
-
+            return downChapter(i);
             //存储章节内容
         }
-        return s;
     }
     public boolean updateChapterList(){
         //获取最新的章节
@@ -928,29 +993,94 @@ public class Book_show extends Activity implements View.OnTouchListener, Gesture
     }
     public List<Chapter> getChapterList(){
         //返回最新章节列表
-        return null;
+        return chapterList;
     }
-
+    //index为章节名
+    public String getChapter(int index){
+        if(book.chapterList != null && book.chapterList.size() > index && book.chapterList.get(index - 1).getChapterContent() != null){
+            return book.chapterList.get(index - 1).getChapterContent();
+        }
+        else{
+            return downChapter(index - 1);
+        }
+    }
     public String getLastChapter(int i){
-        String s = content1;
+        String s = new String();
         if(i >= 2){
-            if(book.chapterList.get(i - 2).getChapterContent().length() != 0){
+            if(book.chapterList != null && book.chapterList.size() > i && book.chapterList.get(i - 2).getChapterContent()!= null){
                 return book.chapterList.get(i - 2).getChapterContent();
             }
             else{
-                //download
-
-                //save
+                return downChapter(i - 2);
             }
         }
-        return s;
+        return content1;
     }
     public void downLoad(){
         //存储全本内容
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                Realm realm = Realm.getDefaultInstance();
+                final ArrayList<String[]> arrayList = downLoad.AllDownLoad(url);
+                while (arrayList.size() < 3){
+                    SystemClock.sleep(100);
+                    Log.e("size", arrayList.size() + "");
+                }
+                System.out.println(arrayList.get(0)[0]);
+                realm.executeTransaction(new Realm.Transaction() {
+                    @Override
+                    public void execute(Realm realm) {
+                        //先查找后得到User对象
+                        RealmResults<Realm_book> realm_books = realm.where(Realm_book.class)
+                                .equalTo("bookname", bookInfo.getBookName()).findAll();
+                        if(realm_books.size() <= 0){
+                            return;
+                        }
+                        Realm_book realm_book = realm_books.get(0);
+                        realm_book.chapterList = new RealmList<Chapter_book>();
+                        for(int i = 0; i < chapterList.size(); i++){
+                            realm_book.chapterList.add(new Chapter_book());
+                            String[] strings = arrayList.get(i);
+                            String s = new String(chapterList.get(i).getName());
+                            s = s + "\n" + "\n" + "\n";
+                            for(int j = 0; j < strings.length; j++){
+                                s = s + "  " + strings[j] + "\n";
+                            }
+                            s = s + "\n" + "\n" + "\n";
+                            realm_book.chapterList.get(i).setChapterContent(s);
+                        }
+                    }
+                });
+                realm.close();
+            }
+        }).start();
+    }
+    public String downChapter(int index){
+        Realm realm = Realm.getDefaultInstance();
+        Realm_book realm_book = realm.where(Realm_book.class)
+                .equalTo("bookname", name).findAll().get(0);
+        String s = new String();
+        DownLoad downLoad = new DownLoad();
+        String[] strings = downLoad.PartDownLoad(realm_book.chapterList.get(index).geturl(), index, url);
+        while (!downLoad.state2){
+            SystemClock.sleep(100);
+        }
+        for(int j = 0; j < strings.length; j++){
+            s = s + "    " + strings[j] + "\n";
+        }
+        s= s + "\n" + "\n" +"\n";
+        Chapter_book chapter_book = new Chapter_book(0, "name");
+        chapter_book.setChapterContent(s);
+        chapter_books.add(chapter_book);
+        Log.e("log", "s="+s);
+        realm.close();
+        return s;
     }
     @Override
     protected void onDestroy(){
         super.onDestroy();
+        saveFile();
         realm.close();
     }
 

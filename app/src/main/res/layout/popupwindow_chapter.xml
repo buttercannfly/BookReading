@@ -14,7 +14,6 @@
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
             android:layout_marginBottom="0dp"
-            android:text= "武动乾坤"
             android:paddingLeft="5dp"
             android:textSize="20sp"/>
         <TextView
@@ -22,7 +21,6 @@
             android:layout_marginTop="0dp"
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="共1123章"
             android:paddingTop="2dp"
             android:paddingLeft="5dp"
             android:textSize="16sp"/>

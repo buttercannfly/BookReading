@@ -5,4 +5,6 @@ package com.example.boyzhang.bookreading.overlay;
  */
 
 public class Genre {
+      public String name;
+
 }

@@ -1,4 +1,4 @@
-package com.example.zhangweikang.book_search;
+package com.example.boyzhang.bookreading.Adapter;
 
 import android.content.Context;
 import android.view.LayoutInflater;
@@ -6,6 +6,9 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.BaseAdapter;
 import android.widget.TextView;
+import com.example.boyzhang.bookreading.R;
+
+import com.example.boyzhang.bookreading.overlay.ForBean;
 
 import java.util.List;
 
@@ -45,13 +48,13 @@ public class MyAdapter extends BaseAdapter {
         View view =inflater.inflate(R.layout.item_home,null);
         ForBean mbean = getItem(position);
         TextView tv_novlename = (TextView) view.findViewById(R.id.novel_name);
-        TextView tv_latest=(TextView)view.findViewById(R.id.latest_name);
+        //TextView tv_latest=(TextView)view.findViewById(R.id.latest_name);
         TextView tv_author = (TextView) view.findViewById(R.id.author_name);
-        TextView tv_time = (TextView) view.findViewById(R.id.span_time);
+        //TextView tv_time = (TextView) view.findViewById(R.id.span_time);
         tv_novlename.setText(mbean.getNovelname());
-        tv_latest.setText(mbean.getLatestname());
+        //tv_latest.setText(mbean.getLatestname());
         tv_author.setText(mbean.getAuthorName());
-        tv_time.setText(mbean.getTime());
+        //tv_time.setText(mbean.getTime());
         return view;
     }
 }

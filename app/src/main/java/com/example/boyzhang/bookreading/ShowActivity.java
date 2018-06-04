@@ -1,31 +1,29 @@
-package com.example.zhangweikang.book_search;
+package com.example.boyzhang.bookreading;
 
 import android.content.Intent;
 import android.graphics.Bitmap;
 import android.graphics.BitmapFactory;
 import android.graphics.drawable.BitmapDrawable;
 import android.graphics.drawable.Drawable;
-import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
-import android.test.UiThreadTest;
+import android.os.Handler;
+import android.support.v7.app.AppCompatActivity;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
-import android.widget.ArrayAdapter;
-import android.widget.Button;
-import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
-import android.widget.TextView;
+
+import com.example.boyzhang.bookreading.Adapter.MyAdapter;
+import com.example.boyzhang.bookreading.overlay.DownPictureAndIntroduction;
+import com.example.boyzhang.bookreading.overlay.ForBean;
+import com.example.boyzhang.bookreading.R;
 
 import org.jsoup.Jsoup;
 import org.jsoup.nodes.Document;
 import org.jsoup.nodes.Element;
 import org.jsoup.select.Elements;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.io.InputStream;
 import java.net.HttpURLConnection;
@@ -38,14 +36,18 @@ public class ShowActivity extends AppCompatActivity {
     private final String lock="lock";
     private static final String TAG = "ShowActivity";
     private List<ForBean> mBeans;
-    private List<Page> mPage;
-    private List<Nextpage> qq;
+    //private List<Nextpage> qq;
     private Document document;
     private ListView lv;
     private String[] mListStr = {"name:ZWK","mature","age","live_area"};
-    private  String page_url;
+    private String page_url;
     private MyAdapter me;
     private ImageView img;
+    private Handler handler;
+    private boolean done;
+    ListView list_item;
+    private boolean isDone;
+    private boolean isDone1;
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -53,20 +55,41 @@ public class ShowActivity extends AppCompatActivity {
         setContentView(R.layout.activity_show);
         Intent it2 = getIntent();
         Bundle bd = it2.getExtras();
+        handler = new Handler();
         if(bd != null){
             page_url=bd.getString("a");
             Log.i(TAG,"new url:"+page_url);
             mBeans = new ArrayList<>();
-            mPage = new ArrayList<Page>();
-            qq = new ArrayList<Nextpage>();
-            jsoupData1(page_url);
-            jsoupPage(page_url);
             Log.e(TAG,"run::::"+mBeans.size());
-            ListView list_item = (ListView) findViewById(R.id.lllist);
-            me = new MyAdapter(mBeans,ShowActivity.this);
-            list_item.setAdapter(me);
+            list_item = (ListView) findViewById(R.id.lllist);
+            new Thread(new Runnable() {
+                @Override
+                public void run() {
+                    jsoupData1(page_url);
+                    while (!done){
+
+                    }
+                    handler.post(new Runnable() {
+                        @Override
+                        public void run() {
+                            me = new MyAdapter(mBeans,ShowActivity.this);
+                            list_item.setAdapter(me);
+                        }
+                    });
+                }
+            }).start();
+            list_item.setOnItemClickListener(new AdapterView.OnItemClickListener() {
+                @Override
+                public void onItemClick(AdapterView<?> parent, View view, int position, long id) {
+                    ForBean bean = mBeans.get(position);
+                    Intent intent = new Intent(ShowActivity.this, bookInfo_show.class);
+                    intent.putExtra("bean", bean);
+                    startActivity(intent);
+                }
+            });
+            //jsoupPage(page_url);
             String a=" https://www.gxwztv.com/ba27696.shtml";
-            jsoupGet(a);
+            //jsoupGet(a);
             img = (ImageView)findViewById(R.id.img);
         }
         Log.i(TAG,"END");
@@ -93,8 +116,10 @@ public class ShowActivity extends AppCompatActivity {
                         ForBean bean = new ForBean();
                         bean.setNovelname(element.select("div.col-xs-3").text());
                         Log.i(TAG, "小说名称:" + bean.getNovelname());
-                        bean.setNovellink(element.select("a").attr("abs:href"));
-                        Log.i(TAG, "小说链接: " + bean.getNovellink());
+                        bean.setImageLink(element.select("a").attr("abs:href"));
+                        Log.i(TAG, "小说链接: " + bean.getImageLink());
+                        String tg = bean.getImageLink();
+                        jsoupD(tg, bean);
                         bean.setLatestname(element.select("div.col-xs-4").text());
                         Log.i(TAG, "最新章节:" + bean.getLatestname());
                         bean.setLatestlink(element.select("a").attr("abs:href"));
@@ -111,6 +136,7 @@ public class ShowActivity extends AppCompatActivity {
                             mBeans.add(bean);
                         }
                     }
+                    done = true;
                     lock.notify();
 
                 } catch (IOException e) {
@@ -129,8 +155,31 @@ public class ShowActivity extends AppCompatActivity {
 
     }
 
+    public void jsoupD(final String a, final ForBean bean)
+    {
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                try{
+                    document = (Document) Jsoup.connect(a)
+                            .timeout(10000)
+                            .get();
+                    Elements noteList = document.select("div.col-xs-8");
+                    Elements li = noteList.select("ul.list-group");
+                    String back = li.select("a.btn.btn-danger").attr("abs:href");
+                    bean.setNovellink(back);
+                    Log.i("ty","run:"+back);
+                    isDone1 = true;
+                }catch (Exception e){
+                    e.printStackTrace();
+                }
+            }
+        }).start();
 
-    public void jsoupPage(final String a){
+    }
+
+
+    /*public void jsoupPage(final String a){
         mPage.clear();
         new Thread(new Runnable() {
             @Override
@@ -159,9 +208,9 @@ public class ShowActivity extends AppCompatActivity {
         }).start();
 
 
-    }
+    }*/
 
-        public void jsoupGet(final String a){
+        /*public void jsoupGet(final String a){
             final Nextpage yp = new Nextpage();
             new Thread(new Runnable() {
                 @Override
@@ -169,7 +218,7 @@ public class ShowActivity extends AppCompatActivity {
 
                     try{
                         Nextpage ll = new Nextpage();
-                        document = (Document)Jsoup.connect(a).timeout(10000).get();
+                        document = (Document) Jsoup.connect(a).timeout(10000).get();
                         Elements noteList = document.select("div.panel-body");
                         Elements li = noteList.select("div.col-xs-8");
                         Elements lii = li .select("div.panel.panel-default.mt20");
@@ -195,7 +244,7 @@ public class ShowActivity extends AppCompatActivity {
                     }
                 }
             }).start();
-        }
+        }*/
 
 
 //    @Override

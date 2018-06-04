@@ -10,6 +10,7 @@ public class Chapter_book extends RealmObject{
     private String chapterName;
     private int chapterIndex;
     private String chapterContent;
+    private String url;
 
     public Chapter_book(){}
     public Chapter_book(int index, String chapterName){
@@ -21,6 +22,12 @@ public class Chapter_book extends RealmObject{
     }
     public String getChapterName(){
         return chapterName;
+    }
+    public void seurl(String link){
+        url = link;
+    }
+    public String geturl(){
+        return url;
     }
     public void setChapterIndex(int index){
         chapterIndex = index;

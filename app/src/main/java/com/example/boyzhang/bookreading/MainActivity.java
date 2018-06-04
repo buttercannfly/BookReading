@@ -7,6 +7,8 @@ import android.os.Handler;
 import android.util.Log;
 import android.view.View;
 import android.widget.AdapterView;
+import android.widget.Button;
+import android.widget.EditText;
 import android.widget.ImageView;
 import android.widget.ListView;
 
@@ -14,6 +16,8 @@ import com.example.boyzhang.bookreading.Adapter.BookShelfAdapter;
 import com.example.boyzhang.bookreading.FileShareModule.FileShareActivity;
 import com.example.boyzhang.bookreading.overlay.BookInfo;
 import com.example.boyzhang.bookreading.overlay.Realm_book;
+import com.example.boyzhang.bookreading.ShowActivity;
+import com.example.boyzhang.bookreading.view.ViewPage;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -29,10 +33,14 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
     Realm realm;
     BookShelfAdapter adapter;
     List<BookInfo> bookList;
+    EditText editText;
     ListView listView;
     Handler handler;
+    Button button;
     ImageView imageView;
+    ImageView boardview;
     String[] permissions = new String[]{"Manifest.permission.WRITE_EXTERNAL_STORAGE"};
+    public static String new_url = "https://www.gxwztv.com/search.htm?keyword=";
 
     @Override
     protected void onCreate(Bundle savedInstanceState) {
@@ -49,7 +57,18 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
                 .build();
         Realm.setDefaultConfiguration(config);
         realm = Realm.getDefaultInstance();
-
+        editText = findViewById(R.id.edit);
+        editText.setOnFocusChangeListener(new View.OnFocusChangeListener() {
+            @Override
+            public void onFocusChange(View v, boolean hasFocus) {
+                if(hasFocus){
+                    findViewById(R.id.linearLayout).setVisibility(View.GONE);
+                }
+                else{
+                    findViewById(R.id.linearLayout).setVisibility(View.VISIBLE);
+                }
+            }
+        });
         /*RealmConfiguration config = new RealmConfiguration.Builder()
                 .name("mybook.realm") //文件名
                 .schemaVersion(0)
@@ -61,12 +80,36 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
         if(userList.size() != 0)
             Log.i("tag", "get");
         Log.i("tag", "no");*/
+        button = findViewById(R.id.button);
+        button.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                String s = editText.getText().toString();
+                new_url=new_url+ s;
+                Intent main_intent = new Intent(MainActivity.this,TextViewTest.class);
+                Bundle bd = new Bundle();
+                bd.putString("a",new_url);
+                main_intent.putExtras(bd);
+//                jsoupPage(new_url);
+                new_url="https://www.gxwztv.com/search.htm?keyword=";
+                startActivity(main_intent);
+            }
+        });
         listView = (ListView) findViewById(R.id.bookshelf);
         imageView = findViewById(R.id.share);
         imageView.setOnClickListener(new View.OnClickListener() {
             @Override
             public void onClick(View v) {
                 Intent intent = new Intent(MainActivity.this, FileShareActivity.class);
+                Log.i("info", "change");
+                startActivity(intent);
+            }
+        });
+        boardview = findViewById(R.id.list);
+        boardview.setOnClickListener(new View.OnClickListener() {
+            @Override
+            public void onClick(View v) {
+                Intent intent = new Intent(MainActivity.this, ViewPage.class);
                 Log.i("info", "change");
                 startActivity(intent);
             }
@@ -90,13 +133,6 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
                 bookList.add(books.get(i).creatBokkInfo());
             }
             return;
-        }
-
-        for(int i = 0; i < 15; i++){
-            Realm_book book = new Realm_book("书本" + i, "章节" + i, 5 , 10);
-            BookInfo bookInfo = book.creatBokkInfo();
-            addToRealm(book);
-            bookList.add(bookInfo);
         }
     }
 
@@ -170,6 +206,19 @@ public class MainActivity extends Activity implements AdapterView.OnItemClickLis
             for(int i = 0; i < books.size(); i++)
                 bookList.add(books.get(i).creatBokkInfo());
         }
+        new Thread(new Runnable() {
+            @Override
+            public void run() {
+                handler.post(new Runnable() {
+                    @Override
+                    public void run() {
+                        adapter = new BookShelfAdapter(getApplicationContext(), bookList);
+                        listView.setAdapter(adapter);
+                        Log.e("up","update");
+                    }
+                });
+            }
+        }).start();
 
     }
 
